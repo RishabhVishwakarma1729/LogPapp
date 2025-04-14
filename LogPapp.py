@@ -91,7 +91,7 @@ def load_model():
             model = pickle.load(f)
         with open('selected_features.pkl', 'rb') as f:
             selected_features = pickle.load(f)
-        with open('X_train_full.pkl', 'rb') as f:
+        with open('X_train.pkl', 'rb') as f:
             X_train = pickle.load(f)
         return model, selected_features, X_train
     except Exception as e:
