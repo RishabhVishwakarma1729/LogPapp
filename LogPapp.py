@@ -32,8 +32,8 @@ model = joblib.load("caco2_model.pkl")
 # Loading selected features used during model training
 selected_features = joblib.load("selected_features.pkl")
 
-# Loading reference training data for performing Applicability Domain checks
-X_train_ref = joblib.load("ad_reference_data.pkl")
+# # Loading reference training data for performing Applicability Domain checks
+# X_train_ref = joblib.load("ad_reference_data.pkl")
 
 
 # === Defining Descriptor Calculator Function ===
@@ -74,18 +74,18 @@ def calculate_descriptors(smiles, radius=2, nBits=2048):
         return None
 
 
-# === Defining Applicability Domain Check Function ===
-def is_in_applicability_domain(X_train, X_new, threshold_factor=3.0):
-    """
-    Checking whether the new sample is within the Applicability Domain (AD) of the training set.
-    Based on calculating Euclidean distance from the mean of training data.
-    """
-    mean_train = np.mean(X_train, axis=0)
-    distances_train = np.sqrt(np.sum((X_train - mean_train) ** 2, axis=1))
-    threshold = np.mean(distances_train) + threshold_factor * np.std(distances_train)
+# # === Defining Applicability Domain Check Function ===
+# def is_in_applicability_domain(X_train, X_new, threshold_factor=3.0):
+#     """
+#     Checking whether the new sample is within the Applicability Domain (AD) of the training set.
+#     Based on calculating Euclidean distance from the mean of training data.
+#     """
+#     mean_train = np.mean(X_train, axis=0)
+#     distances_train = np.sqrt(np.sum((X_train - mean_train) ** 2, axis=1))
+#     threshold = np.mean(distances_train) + threshold_factor * np.std(distances_train)
 
-    distances_new = np.sqrt(np.sum((X_new - mean_train) ** 2, axis=1))
-    return distances_new <= threshold
+#     distances_new = np.sqrt(np.sum((X_new - mean_train) ** 2, axis=1))
+#     return distances_new <= threshold
 
 
 # === Building Streamlit UI ===
@@ -128,8 +128,8 @@ if st.button("Predict"):
         # Making prediction using trained model
         pred = model.predict(X_selected)[0]
 
-        # Performing applicability domain check
-        in_domain = is_in_applicability_domain(X_train_ref[selected_features], X_selected)[0]
+        # # Performing applicability domain check
+        # in_domain = is_in_applicability_domain(X_train_ref[selected_features], X_selected)[0]
 
         # Appending result
         results.append({
