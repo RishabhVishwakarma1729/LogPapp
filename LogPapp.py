@@ -1,10 +1,10 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import joblib
 from rdkit import Chem
 from rdkit.Chem import Descriptors, Lipinski, MolSurf, AllChem
 from rdkit.ML.Descriptors import MoleculeDescriptors
-import pickle
 
 # Set page configuration
 st.set_page_config(page_title="Caco2 Permeability Prediction", layout="wide")
@@ -39,7 +39,7 @@ def calculate_descriptors(smiles, radius=2, nBits=2048):
     except:
         return None
 
-# Function to check if molecule is in applicability domain
+# Applicability domain function
 def is_in_applicability_domain(X_train, X_new, threshold_factor=3.0):
     mean_train = np.mean(X_train, axis=0)
     distances_train = np.sqrt(np.sum((X_train - mean_train)**2, axis=1))
@@ -47,20 +47,13 @@ def is_in_applicability_domain(X_train, X_new, threshold_factor=3.0):
     distances_new = np.sqrt(np.sum((X_new - mean_train)**2, axis=1))
     return distances_new <= threshold
 
-# Function to predict permeability
+# Prediction function
 def predict_permeability(smiles, model, selected_features, X_train):
-    # Calculate descriptors for the SMILES
     desc_dict = calculate_descriptors(smiles)
-
     if desc_dict is None:
-        return {
-            "error": "Invalid SMILES or could not calculate descriptors"
-        }
+        return { "error": "Invalid SMILES or could not calculate descriptors" }
 
-    # Convert to DataFrame
     desc_df = pd.DataFrame([desc_dict])
-
-    # Ensure all needed columns are present
     all_columns = X_train.columns
     X_pred = pd.DataFrame(0, index=[0], columns=all_columns)
 
@@ -68,13 +61,8 @@ def predict_permeability(smiles, model, selected_features, X_train):
         if col in X_pred.columns:
             X_pred[col] = desc_df[col]
 
-    # Select the features needed for prediction
     X_pred_selected = X_pred[selected_features]
-
-    # Make prediction
     prediction = model.predict(X_pred_selected)[0]
-
-    # Check if molecule is in applicability domain
     in_domain = is_in_applicability_domain(X_train[selected_features], X_pred_selected)[0]
 
     return {
@@ -83,29 +71,24 @@ def predict_permeability(smiles, model, selected_features, X_train):
         "In_Domain": in_domain
     }
 
-# Load pre-trained model and related data
+# Load model files
 @st.cache_resource
 def load_model():
     try:
-        with open('xgb_model.pkl', 'rb') as f:
-            model = pickle.load(f)
-        with open('selected_features.pkl', 'rb') as f:
-            selected_features = pickle.load(f)
-        with open('X_train.pkl', 'rb') as f:
-            X_train = pickle.load(f)
+        model = joblib.load("xgb_model.pkl")
+        selected_features = joblib.load("selected_features.pkl")
+        X_train = joblib.load("X_train.pkl")  # Ensure this file exists or rename X_train_full.pkl
         return model, selected_features, X_train
     except Exception as e:
         st.error(f"Error loading model: {str(e)}")
         return None, None, None
 
-# Main app
+# App logic
 model, selected_features, X_train = load_model()
 
 if model is not None and selected_features is not None and X_train is not None:
-    # Input area for SMILES
     smiles_input = st.text_input("Enter SMILES string:", "")
 
-    # Optional: Display molecular structure
     if smiles_input:
         try:
             mol = Chem.MolFromSmiles(smiles_input)
@@ -117,7 +100,6 @@ if model is not None and selected_features is not None and X_train is not None:
         except:
             st.warning("Could not render molecular structure")
 
-    # Prediction button
     if st.button("Predict") and smiles_input:
         with st.spinner("Calculating..."):
             result = predict_permeability(smiles_input, model, selected_features, X_train)
@@ -126,17 +108,15 @@ if model is not None and selected_features is not None and X_train is not None:
                 st.error(result["error"])
             else:
                 st.subheader("Prediction Results")
-
                 result_df = pd.DataFrame({
                     "SMILES": [result["SMILES"]],
                     "Predicted Permeability": [f"{result['Prediction']:.4f}"],
                     "In Applicability Domain": ["Yes" if result["In_Domain"] else "No"]
                 })
-
                 st.table(result_df)
 
                 if not result["In_Domain"]:
-                    st.warning("⚠️ Warning: This molecule is outside the applicability domain of the model. Prediction may be less reliable.")
+                    st.warning("⚠️ Warning: This molecule is outside the applicability domain of the model.")
 
                 if "mol" in locals() and mol:
                     st.subheader("Molecular Properties")
