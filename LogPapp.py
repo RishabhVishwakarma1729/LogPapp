@@ -77,7 +77,7 @@ def load_model():
     try:
         model = joblib.load("xgb_model.pkl")
         selected_features = joblib.load("selected_features.pkl")
-        X_train = joblib.load("X_train.pkl")  # Ensure this file exists or rename X_train_full.pkl
+        X_train = joblib.load("X_train.pkl")
         return model, selected_features, X_train
     except Exception as e:
         st.error(f"Error loading model: {str(e)}")
@@ -116,7 +116,7 @@ if model is not None and selected_features is not None and X_train is not None:
                 st.table(result_df)
 
                 if not result["In_Domain"]:
-                    st.warning("⚠️ Warning: This molecule is outside the applicability domain of the model.")
+                    st.warning("This molecule is outside the applicability domain of the model.")
 
                 if "mol" in locals() and mol:
                     st.subheader("Molecular Properties")
