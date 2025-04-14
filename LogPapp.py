@@ -9,9 +9,9 @@ from sklearn.metrics import mean_squared_error
 from xgboost import XGBRegressor
 
 # === Load model and selected features ===
-model = joblib.load("models/caco2_model.pkl")
-selected_features = joblib.load("models/selected_features.pkl")
-X_train_ref = joblib.load("models/ad_reference_data.pkl")  # For applicability domain check
+model = joblib.load("caco2_model.pkl")
+selected_features = joblib.load("selected_features.pkl")
+X_train_ref = joblib.load("ad_reference_data.pkl")  # For applicability domain check
 
 # === Descriptor calculator ===
 def calculate_descriptors(smiles, radius=2, nBits=2048):
