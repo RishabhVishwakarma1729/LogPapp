@@ -656,4 +656,8 @@ elif page == "Make Predictions":
                         st.warning(f"Invalid SMILES: {', '.join(results['invalid_smiles'])}")
                 else:
                     # Create result dataframe
-                    result_df = pd.
+                    result_df = pd.DataFrame({
+                    "SMILES": results["SMILES"],
+                    "Prediction": results["Prediction"],
+                    "In_Domain": results["In_Domain"]
+                    })
