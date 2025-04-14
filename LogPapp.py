@@ -5,18 +5,15 @@ import joblib
 from rdkit import Chem
 from rdkit.Chem import Descriptors, Lipinski, MolSurf, AllChem
 from rdkit.ML.Descriptors import MoleculeDescriptors
+from sklearn.metrics import mean_squared_error
+from xgboost import XGBRegressor
 
-# Set page configuration
-st.set_page_config(page_title="Caco2 Permeability Prediction", layout="wide")
+# === Load model and selected features ===
+model = joblib.load("models/caco2_model.pkl")
+selected_features = joblib.load("models/selected_features.pkl")
+X_train_ref = joblib.load("models/ad_reference_data.pkl")  # For applicability domain check
 
-# Title and description
-st.title("Caco2 Permeability Prediction")
-st.markdown("""
-This application predicts the Caco2 permeability of molecules using a pre-trained machine learning model.
-Enter a SMILES string to get a prediction.
-""")
-
-# Function to calculate molecular descriptors
+# === Descriptor calculator ===
 def calculate_descriptors(smiles, radius=2, nBits=2048):
     try:
         mol = Chem.MolFromSmiles(smiles)
@@ -39,103 +36,47 @@ def calculate_descriptors(smiles, radius=2, nBits=2048):
     except:
         return None
 
-# Applicability domain function
+# === Applicability Domain Check ===
 def is_in_applicability_domain(X_train, X_new, threshold_factor=3.0):
     mean_train = np.mean(X_train, axis=0)
-    distances_train = np.sqrt(np.sum((X_train - mean_train)**2, axis=1))
+    distances_train = np.sqrt(np.sum((X_train - mean_train) ** 2, axis=1))
     threshold = np.mean(distances_train) + threshold_factor * np.std(distances_train)
-    distances_new = np.sqrt(np.sum((X_new - mean_train)**2, axis=1))
+    distances_new = np.sqrt(np.sum((X_new - mean_train) ** 2, axis=1))
     return distances_new <= threshold
 
-# Prediction function
-def predict_permeability(smiles, model, selected_features, X_train):
-    desc_dict = calculate_descriptors(smiles)
-    if desc_dict is None:
-        return { "error": "Invalid SMILES or could not calculate descriptors" }
+# === Streamlit UI ===
+st.set_page_config(page_title="Caco-2 Permeability Predictor", layout="centered")
+st.title("🧪 Caco-2 Permeability Prediction")
+st.markdown("Enter SMILES strings to predict **Caco-2 permeability** using an XGBoost model.")
 
-    desc_df = pd.DataFrame([desc_dict])
-    all_columns = X_train.columns
-    X_pred = pd.DataFrame(0, index=[0], columns=all_columns)
+smiles_input = st.text_area("Enter SMILES (one per line):", height=150)
 
-    for col in desc_df.columns:
-        if col in X_pred.columns:
-            X_pred[col] = desc_df[col]
+if st.button("Predict"):
+    smiles_list = [s.strip() for s in smiles_input.strip().split("\n") if s.strip()]
+    results = []
+    
+    for smi in smiles_list:
+        desc = calculate_descriptors(smi)
+        if desc is None:
+            results.append({"SMILES": smi, "Prediction": "Invalid SMILES", "In Domain": "N/A"})
+            continue
 
-    X_pred_selected = X_pred[selected_features]
-    prediction = model.predict(X_pred_selected)[0]
-    in_domain = is_in_applicability_domain(X_train[selected_features], X_pred_selected)[0]
+        desc_df = pd.DataFrame([desc])
+        X_pred = pd.DataFrame(0, index=range(1), columns=X_train_ref.columns)
+        for col in desc_df.columns:
+            if col in X_pred.columns:
+                X_pred[col] = desc_df[col].values
 
-    return {
-        "SMILES": smiles,
-        "Prediction": prediction,
-        "In_Domain": in_domain
-    }
+        X_selected = X_pred[selected_features]
+        pred = model.predict(X_selected)[0]
+        in_domain = is_in_applicability_domain(X_train_ref[selected_features], X_selected)[0]
 
-# Load model files
-@st.cache_resource
-def load_model():
-    try:
-        model = joblib.load("xgb_model.pkl")
-        selected_features = joblib.load("selected_features.pkl")
-        X_train = joblib.load("X_train.pkl")
-        return model, selected_features, X_train
-    except Exception as e:
-        st.error(f"Error loading model: {str(e)}")
-        return None, None, None
+        results.append({
+            "SMILES": smi,
+            "Prediction": round(pred, 4),
+            "In Domain": "✅ Yes" if in_domain else "⚠️ No"
+        })
 
-# App logic
-model, selected_features, X_train = load_model()
+    st.markdown("### Results:")
+    st.dataframe(pd.DataFrame(results))
 
-if model is not None and selected_features is not None and X_train is not None:
-    smiles_input = st.text_input("Enter SMILES string:", "")
-
-    if smiles_input:
-        try:
-            mol = Chem.MolFromSmiles(smiles_input)
-            if mol:
-                st.write("Molecular Structure:")
-                from rdkit.Chem import Draw
-                mol_img = Draw.MolToImage(mol)
-                st.image(mol_img)
-        except:
-            st.warning("Could not render molecular structure")
-
-    if st.button("Predict") and smiles_input:
-        with st.spinner("Calculating..."):
-            result = predict_permeability(smiles_input, model, selected_features, X_train)
-
-            if "error" in result:
-                st.error(result["error"])
-            else:
-                st.subheader("Prediction Results")
-                result_df = pd.DataFrame({
-                    "SMILES": [result["SMILES"]],
-                    "Predicted Permeability": [f"{result['Prediction']:.4f}"],
-                    "In Applicability Domain": ["Yes" if result["In_Domain"] else "No"]
-                })
-                st.table(result_df)
-
-                if not result["In_Domain"]:
-                    st.warning("This molecule is outside the applicability domain of the model.")
-
-                if "mol" in locals() and mol:
-                    st.subheader("Molecular Properties")
-                    props_df = pd.DataFrame({
-                        "Property": ["Molecular Weight", "LogP", "H-Bond Donors", "H-Bond Acceptors", "Rotatable Bonds", "TPSA"],
-                        "Value": [
-                            f"{Descriptors.MolWt(mol):.2f}",
-                            f"{Descriptors.MolLogP(mol):.2f}",
-                            Lipinski.NumHDonors(mol),
-                            Lipinski.NumHAcceptors(mol),
-                            Lipinski.NumRotatableBonds(mol),
-                            f"{MolSurf.TPSA(mol):.2f}"
-                        ]
-                    })
-                    st.table(props_df)
-else:
-    st.error("Model files not found. Please ensure 'xgb_model.pkl', 'selected_features.pkl', and 'X_train.pkl' are in the same directory as this app.")
-    st.info("""
-    If you're running this app for the first time, you need to:
-    1. Make sure your trained model files are saved in the same directory as this app
-    2. Check that the model files have the expected names: 'xgb_model.pkl', 'selected_features.pkl', and 'X_train.pkl'
-    """)
