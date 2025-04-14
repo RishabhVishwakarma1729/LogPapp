@@ -51,32 +51,32 @@ def is_in_applicability_domain(X_train, X_new, threshold_factor=3.0):
 def predict_permeability(smiles, model, selected_features, X_train):
     # Calculate descriptors for the SMILES
     desc_dict = calculate_descriptors(smiles)
-    
+
     if desc_dict is None:
         return {
             "error": "Invalid SMILES or could not calculate descriptors"
         }
-    
+
     # Convert to DataFrame
     desc_df = pd.DataFrame([desc_dict])
-    
+
     # Ensure all needed columns are present
     all_columns = X_train.columns
     X_pred = pd.DataFrame(0, index=[0], columns=all_columns)
-    
+
     for col in desc_df.columns:
         if col in X_pred.columns:
             X_pred[col] = desc_df[col]
-    
+
     # Select the features needed for prediction
     X_pred_selected = X_pred[selected_features]
-    
+
     # Make prediction
     prediction = model.predict(X_pred_selected)[0]
-    
+
     # Check if molecule is in applicability domain
     in_domain = is_in_applicability_domain(X_train[selected_features], X_pred_selected)[0]
-    
+
     return {
         "SMILES": smiles,
         "Prediction": prediction,
@@ -104,46 +104,40 @@ model, selected_features, X_train = load_model()
 if model is not None and selected_features is not None and X_train is not None:
     # Input area for SMILES
     smiles_input = st.text_input("Enter SMILES string:", "")
-    
+
     # Optional: Display molecular structure
     if smiles_input:
         try:
             mol = Chem.MolFromSmiles(smiles_input)
             if mol:
                 st.write("Molecular Structure:")
-                # Convert to image and display
                 from rdkit.Chem import Draw
                 mol_img = Draw.MolToImage(mol)
                 st.image(mol_img)
         except:
             st.warning("Could not render molecular structure")
-    
+
     # Prediction button
     if st.button("Predict") and smiles_input:
-        # Show spinner while calculating
         with st.spinner("Calculating..."):
             result = predict_permeability(smiles_input, model, selected_features, X_train)
-            
+
             if "error" in result:
                 st.error(result["error"])
             else:
-                # Display results
                 st.subheader("Prediction Results")
-                
-                # Format as table
+
                 result_df = pd.DataFrame({
                     "SMILES": [result["SMILES"]],
                     "Predicted Permeability": [f"{result['Prediction']:.4f}"],
                     "In Applicability Domain": ["Yes" if result["In_Domain"] else "No"]
                 })
-                
+
                 st.table(result_df)
-                
-                # Display warning if not in applicability domain
+
                 if not result["In_Domain"]:
                     st.warning("⚠️ Warning: This molecule is outside the applicability domain of the model. Prediction may be less reliable.")
-                
-                # Add some molecular properties
+
                 if "mol" in locals() and mol:
                     st.subheader("Molecular Properties")
                     props_df = pd.DataFrame({
@@ -159,11 +153,9 @@ if model is not None and selected_features is not None and X_train is not None:
                     })
                     st.table(props_df)
 else:
-    st.error("Model files not found. Please ensure 'caco2_model.pkl', 'selected_features.pkl', and 'X_train.pkl' are in the same directory as this app.")
-    
-    # Provide instructions for missing model files
+    st.error("Model files not found. Please ensure 'xgb_model.pkl', 'selected_features.pkl', and 'X_train.pkl' are in the same directory as this app.")
     st.info("""
     If you're running this app for the first time, you need to:
     1. Make sure your trained model files are saved in the same directory as this app
-    2. Check that the model files have the expected names: 'caco2_model.pkl', 'selected_features.pkl', and 'X_train.pkl'
+    2. Check that the model files have the expected names: 'xgb_model.pkl', 'selected_features.pkl', and 'X_train.pkl'
     """)
