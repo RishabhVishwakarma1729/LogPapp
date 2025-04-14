@@ -1,6 +1,6 @@
-# Caco-2 Permeability Prediction Web Application
+# Caco-2 Permeability Assay
 
-This repository contains a **Streamlit-based web application** for predicting **Caco-2 cell permeability** of chemical compounds using a pre-trained **XGBoost regression model**. The app accepts **SMILES strings** as input and returns predicted permeability values along with an **Applicability Domain (AD) check** to validate the reliability of predictions.
+This repository contains a **Streamlit-based web application** for predicting **Caco-2 cell permeability** of chemical compounds using a pre-trained **XGBoost regression model**. The model was trained earlier with best hyperparameters obtained by brute-force optimization of ~490 best features. The app accepts **SMILES strings** as input and returns predicted permeability values along with an **Applicability Domain (AD) check** to validate the reliability of predictions.
 
 ---
 
@@ -20,7 +20,7 @@ This repository contains a **Streamlit-based web application** for predicting **
 Install all required dependencies with:
 
 ```bash
-pip install streamlit pandas numpy scikit-learn xgboost joblib
+pip install streamlit pandas numpy scikit-learn xgboost joblib rdkit PyTDC
 ```
 
 > **Note:** RDKit cannot be installed via pip for most users. Instead, use conda:
