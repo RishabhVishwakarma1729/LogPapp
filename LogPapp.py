@@ -87,11 +87,11 @@ def predict_permeability(smiles, model, selected_features, X_train):
 @st.cache_resource
 def load_model():
     try:
-        with open('caco2_model.pkl', 'rb') as f:
+        with open('xgb_model.pkl', 'rb') as f:
             model = pickle.load(f)
         with open('selected_features.pkl', 'rb') as f:
             selected_features = pickle.load(f)
-        with open('X_train.pkl', 'rb') as f:
+        with open('X_train_full.pkl', 'rb') as f:
             X_train = pickle.load(f)
         return model, selected_features, X_train
     except Exception as e:
