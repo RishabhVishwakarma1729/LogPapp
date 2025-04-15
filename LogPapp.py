@@ -95,7 +95,30 @@ st.set_page_config(page_title="Caco-2 Permeability Predictor", layout="centered"
 
 # Displaying app title and description
 st.title("🧪 Caco-2 Permeability Prediction")
-st.markdown("Enter SMILES strings to predict **Caco-2 permeability** using an XGBoost model.")
+st.markdown("Enter SMILES strings to predict **Caco-2 permeability**.")
+st.markdown("""
+
+**Caco-2 permeability** refers to the ability of a compound to pass through a layer of Caco-2 cells, which are human colorectal adenocarcinoma cells commonly used as an *in vitro* model of the intestinal barrier.
+
+---
+
+### 🔍 Key Points
+
+- **Caco-2 Cells**: Form tight junctions after ~21 days, resembling the intestinal lining.
+- **Purpose**: Simulates **passive diffusion** across the intestinal wall.
+- **Measured As**:  
+  - `P_app` (Apparent Permeability Coefficient), in cm/s or log(P_app)
+
+---
+
+### 🧬 Why It Matters
+
+- Predicts **oral bioavailability**
+- Flags **poorly absorbed** or **efflux-prone** compounds
+- Reduces reliance on early animal testing
+
+
+""")
 
 # Creating text input box for SMILES strings
 smiles_input = st.text_area("Enter SMILES (one per line):", height=150)
