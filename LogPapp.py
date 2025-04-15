@@ -71,7 +71,7 @@ def classify_log_papp(log_papp):
 
 st.set_page_config(page_title="Caco-2 Permeability Predictor", layout="centered")
 
-st.image("weadmet_logo.png", width=200)  # Adjust width as needed
+st.image("weadmet_logo.png", width=100)  # Adjust width as needed
 st.markdown("### ")  # Adds vertical spacing after the logo
 
 st.title("🧪 Caco-2 Permeability Prediction")
