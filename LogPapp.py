@@ -87,6 +87,14 @@ def is_in_applicability_domain(X_train, X_new, threshold_factor=3.0):
     distances_new = np.sqrt(np.sum((X_new - mean_train) ** 2, axis=1))
     return distances_new <= threshold
 
+def classify_log_papp(log_papp):
+    if log_papp > -5.0:
+        return "High permeability ✅"
+    elif -6.0 <= log_papp <= -5.0:
+        return "Moderate permeability ⚠️"
+    else:
+        return "Low permeability ❌"
+
 
 # === Building Streamlit UI ===
 
@@ -154,12 +162,14 @@ if st.button("Predict"):
         # Performing applicability domain check
         in_domain = is_in_applicability_domain(X_train_ref[selected_features], X_selected)[0]
         p_app = 10 ** pred
+        permeability_class = classify_log_papp(log_papp)
 
         # Appending result
         results.append({
             "SMILES": smi,
             "Prediction (logPapp)": round(pred, 4),
             "P_app (cm/s)": "{:.2e}".format(p_app),
+            "Permeability Class": permeability_class,
             "In Domain": "✅ Yes" if in_domain else "⚠️ No"
         })
 
