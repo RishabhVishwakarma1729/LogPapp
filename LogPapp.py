@@ -137,17 +137,18 @@ st.markdown("""
 
 st.markdown("---")
 st.markdown("### 📊 Our Model's Performance")
+st.markdown("Total number of compounds in the dataset used - 910")
 st.markdown("Split used - Scaffold")
 st.markdown("""
-**Training Set**  
+**Training Set** (637 Compounds)  
 - RMSE: `0.1027`  
 - R²: `0.9834`  
 
-**Validation Set**  
+**Validation Set**(91 Compounds)  
 - RMSE: `0.1626`  
 - R²: `0.9559`  
 
-**Test Set**  
+**Test Set**(182 Compounds) 
 - RMSE: `0.1347`  
 - R²: `0.9712`
 """)
