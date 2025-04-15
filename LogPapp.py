@@ -144,11 +144,11 @@ st.markdown("""
 - RMSE: `0.1027`  
 - R²: `0.9834`  
 
-**Validation Set**(91 Compounds)  
+**Validation Set** (91 Compounds)  
 - RMSE: `0.1626`  
 - R²: `0.9559`  
 
-**Test Set**(182 Compounds) 
+**Test Set** (182 Compounds) 
 - RMSE: `0.1347`  
 - R²: `0.9712`
 """)
