@@ -73,29 +73,6 @@ st.set_page_config(page_title="Caco-2 Permeability Predictor", layout="centered"
 
 st.title("🧪 Caco-2 Permeability Prediction")
 st.markdown("Enter SMILES strings to predict **Caco-2 permeability**.")
-st.markdown("""
-
-**Caco-2 permeability** refers to the ability of a compound to pass through a layer of Caco-2 cells, which are human colorectal adenocarcinoma cells commonly used as an *in vitro* model of the intestinal barrier.
-
----
-
-### 🔍 Key Points
-
-- **Caco-2 Cells**: Form tight junctions after ~21 days, resembling the intestinal lining.
-- **Purpose**: Simulates **passive diffusion** across the intestinal wall.
-- **Measured As**:  
-  - `P_app` (Apparent Permeability Coefficient), in cm/s or log(P_app)
-
----
-
-### 🧬 Why It Matters
-
-- Predicts **oral bioavailability**
-- Flags **poorly absorbed** or **efflux-prone** compounds
-- Reduces reliance on early animal testing
-
-
-""")
 
 smiles_input = st.text_area("Enter SMILES (one per line):", height=150)
 
@@ -133,6 +110,30 @@ if st.button("Predict"):
     st.markdown("### Results:")
     st.dataframe(pd.DataFrame(results))
 
+
+st.markdown("""
+
+**Caco-2 permeability** refers to the ability of a compound to pass through a layer of Caco-2 cells, which are human colorectal adenocarcinoma cells commonly used as an *in vitro* model of the intestinal barrier.
+
+---
+
+### 🔍 Key Points
+
+- **Caco-2 Cells**: Form tight junctions after ~21 days, resembling the intestinal lining.
+- **Purpose**: Simulates **passive diffusion** across the intestinal wall.
+- **Measured As**:  
+  - `P_app` (Apparent Permeability Coefficient), in cm/s or log(P_app)
+
+---
+
+### 🧬 Why It Matters
+
+- Predicts **oral bioavailability**
+- Flags **poorly absorbed** or **efflux-prone** compounds
+- Reduces reliance on early animal testing
+
+
+""")
 
 st.markdown("---")
 st.markdown("### 📊 Our Model's Performance")
