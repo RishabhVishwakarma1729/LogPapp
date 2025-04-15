@@ -158,7 +158,7 @@ if st.button("Predict"):
         # Appending result
         results.append({
             "SMILES": smi,
-            "Prediction": round(pred, 4),
+            "Prediction (logPapp)": round(pred, 4),
             "P_app (cm/s)": "{:.2e}".format(p_app),
             "In Domain": "✅ Yes" if in_domain else "⚠️ No"
         })
