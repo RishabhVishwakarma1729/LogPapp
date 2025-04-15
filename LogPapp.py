@@ -71,6 +71,9 @@ def classify_log_papp(log_papp):
 
 st.set_page_config(page_title="Caco-2 Permeability Predictor", layout="centered")
 
+st.image("growdea-logo.png", width=200)  # Adjust width as needed
+
+
 st.title("🧪 Caco-2 Permeability Prediction")
 st.markdown("Enter SMILES strings to predict **Caco-2 permeability**.")
 
