@@ -99,23 +99,6 @@ st.markdown("""
 
 smiles_input = st.text_area("Enter SMILES (one per line):", height=150)
 
-st.markdown("---")
-st.markdown("### 📊 Our Model's Performance")
-st.markdown("Split used - Scaffold")
-st.markdown("""
-**Training Set**  
-- RMSE: `0.1027`  
-- R²: `0.9834`  
-
-**Validation Set**  
-- RMSE: `0.1626`  
-- R²: `0.9559`  
-
-**Test Set**  
-- RMSE: `0.1347`  
-- R²: `0.9712`
-""")
-
 
 if st.button("Predict"):
     smiles_list = [s.strip() for s in smiles_input.strip().split("\n") if s.strip()]
@@ -149,3 +132,21 @@ if st.button("Predict"):
 
     st.markdown("### Results:")
     st.dataframe(pd.DataFrame(results))
+
+
+st.markdown("---")
+st.markdown("### 📊 Our Model's Performance")
+st.markdown("Split used - Scaffold")
+st.markdown("""
+**Training Set**  
+- RMSE: `0.1027`  
+- R²: `0.9834`  
+
+**Validation Set**  
+- RMSE: `0.1626`  
+- R²: `0.9559`  
+
+**Test Set**  
+- RMSE: `0.1347`  
+- R²: `0.9712`
+""")
