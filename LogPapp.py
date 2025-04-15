@@ -38,24 +38,17 @@ X_train_ref = joblib.load("ad_reference_data.pkl")
 
 # === Defining Descriptor Calculator Function ===
 def calculate_descriptors(smiles, radius=2, nBits=2048):
-    """
-    Taking a SMILES string and calculating a set of molecular descriptors and Morgan fingerprint bits.
-    Returning a dictionary of descriptors.
-    """
     try:
-        mol = Chem.MolFromSmiles(smiles)  # Converting SMILES to RDKit molecule
+        mol = Chem.MolFromSmiles(smiles)
         if mol is None:
             return None
 
-        # Getting list of standard RDKit descriptors
         desc_names = [desc_name[0] for desc_name in Descriptors._descList]
         calc = MoleculeDescriptors.MolecularDescriptorCalculator(desc_names)
 
-        # Calculating descriptor values
         descriptors = calc.CalcDescriptors(mol)
         desc_dict = dict(zip(desc_names, descriptors))
 
-        # Adding Lipinski and other custom descriptors
         desc_dict['HBondDonorCount'] = Lipinski.NumHDonors(mol)
         desc_dict['HBondAcceptorCount'] = Lipinski.NumHAcceptors(mol)
         desc_dict['RotatableBondCount'] = Lipinski.NumRotatableBonds(mol)
@@ -63,23 +56,17 @@ def calculate_descriptors(smiles, radius=2, nBits=2048):
         desc_dict['LabuteASA'] = MolSurf.LabuteASA(mol)
         desc_dict['HeavyAtomCount'] = Lipinski.HeavyAtomCount(mol)
 
-        # Generating Morgan fingerprint (bit vector)
         fp = list(AllChem.GetMorganFingerprintAsBitVect(mol, radius, nBits=nBits))
         for i, bit in enumerate(fp):
             desc_dict[f'Morgan_{i}'] = bit
 
         return desc_dict
     except:
-        # Failing silently and returning None if an error occurs (e.g., invalid SMILES)
         return None
 
 
 # === Defining Applicability Domain Check Function ===
 def is_in_applicability_domain(X_train, X_new, threshold_factor=3.0):
-    """
-    Checking whether the new sample is within the Applicability Domain (AD) of the training set.
-    Based on calculating Euclidean distance from the mean of training data.
-    """
     mean_train = np.mean(X_train, axis=0)
     distances_train = np.sqrt(np.sum((X_train - mean_train) ** 2, axis=1))
     threshold = np.mean(distances_train) + threshold_factor * np.std(distances_train)
@@ -90,14 +77,11 @@ def is_in_applicability_domain(X_train, X_new, threshold_factor=3.0):
 
 # === Building Streamlit UI ===
 
-# Setting Streamlit page configuration: title and layout
 st.set_page_config(page_title="Caco-2 Permeability Predictor", layout="centered")
 
-# Displaying app title and description
 st.title("🧪 Caco-2 Permeability Prediction")
 st.markdown("Enter SMILES strings to predict **Caco-2 permeability**.")
 st.markdown("""
-
 **Caco-2 permeability** refers to the ability of a compound to pass through a layer of Caco-2 cells, which are human colorectal adenocarcinoma cells commonly used as an *in vitro* model of the intestinal barrier.
 
 ---
@@ -116,51 +100,39 @@ st.markdown("""
 - Predicts **oral bioavailability**
 - Flags **poorly absorbed** or **efflux-prone** compounds
 - Reduces reliance on early animal testing
-
-
 """)
 
-# Creating text input box for SMILES strings
 smiles_input = st.text_area("Enter SMILES (one per line):", height=150)
 
-# Creating button to trigger prediction
 if st.button("Predict"):
-    # Splitting and stripping input into individual SMILES
     smiles_list = [s.strip() for s in smiles_input.strip().split("\n") if s.strip()]
     results = []
 
-    # Iterating over each SMILES string
     for smi in smiles_list:
         desc = calculate_descriptors(smi)
         if desc is None:
-            results.append({"SMILES": smi, "Prediction": "Invalid SMILES", "In Domain": "N/A"})
+            results.append({"SMILES": smi, "log(P_app)": "Invalid SMILES", "P_app (cm/s)": "N/A", "In Domain": "N/A"})
             continue
 
-        # Converting descriptor dictionary to DataFrame
         desc_df = pd.DataFrame([desc])
 
-        # Creating prediction DataFrame with columns matching training data
         X_pred = pd.DataFrame(0, index=range(1), columns=X_train_ref.columns)
         for col in desc_df.columns:
             if col in X_pred.columns:
                 X_pred[col] = desc_df[col].values
 
-        # Selecting only model-relevant features
         X_selected = X_pred[selected_features]
 
-        # Making prediction using trained model
         pred = model.predict(X_selected)[0]
-
-        # Performing applicability domain check
+        p_app = 10 ** pred
         in_domain = is_in_applicability_domain(X_train_ref[selected_features], X_selected)[0]
 
-        # Appending result
         results.append({
             "SMILES": smi,
-            "Prediction": round(pred, 4),
+            "log(P_app)": round(pred, 4),
+            "P_app (cm/s)": "{:.2e}".format(p_app),
             "In Domain": "✅ Yes" if in_domain else "⚠️ No"
         })
 
-    # Displaying results
     st.markdown("### Results:")
     st.dataframe(pd.DataFrame(results))
